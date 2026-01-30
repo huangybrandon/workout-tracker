@@ -8,6 +8,7 @@ import type { SetInput } from "@/lib/types";
 interface SetRowProps {
   setNumber: number;
   set: SetInput;
+  mode: "weight" | "time";
   onChange: (field: "reps" | "weight", value: string) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -16,10 +17,39 @@ interface SetRowProps {
 export function SetRow({
   setNumber,
   set,
+  mode,
   onChange,
   onRemove,
   canRemove,
 }: SetRowProps) {
+  if (mode === "time") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="w-8 shrink-0 text-center text-sm text-muted-foreground">
+          {setNumber}
+        </span>
+        <Input
+          placeholder="Seconds"
+          value={set.reps}
+          onChange={(e) => onChange("reps", e.target.value)}
+          inputMode="numeric"
+          className="h-9"
+        />
+        <span className="shrink-0 text-xs text-muted-foreground">sec</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          onClick={onRemove}
+          disabled={!canRemove}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       <span className="w-8 shrink-0 text-center text-sm text-muted-foreground">

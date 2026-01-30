@@ -8,7 +8,6 @@ import { WorkoutForm } from "@/components/workout/workout-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { normalizeExerciseTags } from "@/lib/types";
 import type { ExerciseBlock, Exercise, Tag } from "@/lib/types";
 
 export default function EditWorkoutPage() {
@@ -64,6 +63,7 @@ export default function EditWorkoutPage() {
             name: set.exercises.name,
             is_custom: set.exercises.is_custom,
             user_id: set.exercises.user_id,
+            mode: set.exercises.mode || "weight",
             created_at: set.exercises.created_at,
             tags,
           };

@@ -11,6 +11,8 @@ export interface ChartDataPoint {
   label: string;
   maxWeight: number;
   totalVolume: number;
+  maxTime: number;
+  totalTime: number;
 }
 
 export function transformProgressData(sets: SetWithDate[]): ChartDataPoint[] {
@@ -33,6 +35,8 @@ export function transformProgressData(sets: SetWithDate[]): ChartDataPoint[] {
         (sum, s) => sum + Number(s.weight) * s.reps,
         0
       ),
+      maxTime: Math.max(...dateSets.map((s) => s.reps)),
+      totalTime: dateSets.reduce((sum, s) => sum + s.reps, 0),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }

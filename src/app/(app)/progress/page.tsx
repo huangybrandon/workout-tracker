@@ -26,13 +26,13 @@ import {
 import type { Exercise, ExerciseWithTags } from "@/lib/types";
 import { normalizeExerciseTags } from "@/lib/types";
 
+type Metric = "maxWeight" | "totalVolume" | "maxTime" | "totalTime";
+
 export default function ProgressPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
-  const [metric, setMetric] = useState<"maxWeight" | "totalVolume">(
-    "maxWeight"
-  );
+  const [metric, setMetric] = useState<Metric>("maxWeight");
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
@@ -49,8 +49,12 @@ export default function ProgressPage() {
     fetchExercises();
   }, []);
 
+  const selectedExercise = exercises.find((e) => e.id === selectedExerciseId);
+  const exerciseMode = selectedExercise?.mode ?? "weight";
+
   useEffect(() => {
     if (selectedExerciseId) {
+      setMetric(exerciseMode === "time" ? "maxTime" : "maxWeight");
       fetchProgressData(selectedExerciseId);
     }
   }, [selectedExerciseId]);
@@ -87,7 +91,12 @@ export default function ProgressPage() {
     setLoading(false);
   }
 
-  const selectedExercise = exercises.find((e) => e.id === selectedExerciseId);
+  const metricLabel: Record<Metric, string> = {
+    maxWeight: "Max Weight",
+    totalVolume: "Total Volume",
+    maxTime: "Max Time",
+    totalTime: "Total Time",
+  };
 
   return (
     <div className="space-y-4">
@@ -109,15 +118,28 @@ export default function ProgressPage() {
       {selectedExerciseId && (
         <Tabs
           value={metric}
-          onValueChange={(v) => setMetric(v as "maxWeight" | "totalVolume")}
+          onValueChange={(v) => setMetric(v as Metric)}
         >
           <TabsList className="w-full">
-            <TabsTrigger value="maxWeight" className="flex-1">
-              Max Weight
-            </TabsTrigger>
-            <TabsTrigger value="totalVolume" className="flex-1">
-              Total Volume
-            </TabsTrigger>
+            {exerciseMode === "time" ? (
+              <>
+                <TabsTrigger value="maxTime" className="flex-1">
+                  Max Time
+                </TabsTrigger>
+                <TabsTrigger value="totalTime" className="flex-1">
+                  Total Time
+                </TabsTrigger>
+              </>
+            ) : (
+              <>
+                <TabsTrigger value="maxWeight" className="flex-1">
+                  Max Weight
+                </TabsTrigger>
+                <TabsTrigger value="totalVolume" className="flex-1">
+                  Total Volume
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </Tabs>
       )}
@@ -128,8 +150,7 @@ export default function ProgressPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              {selectedExercise?.name} -{" "}
-              {metric === "maxWeight" ? "Max Weight" : "Total Volume"}
+              {selectedExercise?.name} - {metricLabel[metric]}
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -32,6 +32,7 @@ export function ExerciseBlock({
   const visibleTags = block.exercise.tags?.slice(0, MAX_VISIBLE_TAGS) ?? [];
   const overflowCount =
     (block.exercise.tags?.length ?? 0) - MAX_VISIBLE_TAGS;
+  const mode = block.exercise.mode;
 
   return (
     <Card>
@@ -70,10 +71,19 @@ export function ExerciseBlock({
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-8 text-center">Set</span>
-          <span className="flex-1">Reps</span>
-          <span className="flex-1">Weight</span>
-          <span className="w-8" />
-          <span className="w-9" />
+          {mode === "time" ? (
+            <>
+              <span className="flex-1">Seconds</span>
+              <span className="w-8" />
+            </>
+          ) : (
+            <>
+              <span className="flex-1">Reps</span>
+              <span className="flex-1">Weight</span>
+              <span className="w-8" />
+              <span className="w-9" />
+            </>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -82,6 +92,7 @@ export function ExerciseBlock({
             key={set.id}
             setNumber={index + 1}
             set={set}
+            mode={mode}
             onChange={(field, value) => onUpdateSet(index, field, value)}
             onRemove={() => onRemoveSet(index)}
             canRemove={block.sets.length > 1}

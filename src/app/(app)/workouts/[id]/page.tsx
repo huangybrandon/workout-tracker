@@ -55,6 +55,7 @@ export default async function WorkoutDetailPage({
       exercise: {
         id: string;
         name: string;
+        mode: "weight" | "time";
         tags: Tag[];
       };
       sets: { set_number: number; reps: number; weight: number }[];
@@ -72,6 +73,7 @@ export default async function WorkoutDetailPage({
         exercise: {
           id: set.exercises.id,
           name: set.exercises.name,
+          mode: set.exercises.mode || "weight",
           tags,
         },
         sets: [],
@@ -89,11 +91,10 @@ export default async function WorkoutDetailPage({
     group.sets.sort((a, b) => a.set_number - b.set_number);
   });
 
-  const totalVolume = workout.workout_sets.reduce(
-    (sum: number, s: { weight: number; reps: number }) =>
-      sum + Number(s.weight) * s.reps,
-    0
-  );
+  const totalVolume = Object.values(exerciseGroups)
+    .filter((g) => g.exercise.mode === "weight")
+    .flatMap((g) => g.sets)
+    .reduce((sum, s) => sum + s.weight * s.reps, 0);
 
   return (
     <div className="space-y-4">
@@ -171,9 +172,15 @@ export default async function WorkoutDetailPage({
                     <span className="w-12 text-muted-foreground">
                       Set {set.set_number}
                     </span>
-                    <span>{set.reps} reps</span>
-                    <span className="text-muted-foreground">@</span>
-                    <span>{set.weight} lbs</span>
+                    {group.exercise.mode === "time" ? (
+                      <span>{set.reps} sec</span>
+                    ) : (
+                      <>
+                        <span>{set.reps} reps</span>
+                        <span className="text-muted-foreground">@</span>
+                        <span>{set.weight} lbs</span>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

@@ -11,10 +11,19 @@ import {
 } from "recharts";
 import type { ChartDataPoint } from "@/lib/utils/chart-data";
 
+type Metric = "maxWeight" | "totalVolume" | "maxTime" | "totalTime";
+
 interface ExerciseProgressChartProps {
   data: ChartDataPoint[];
-  metric: "maxWeight" | "totalVolume";
+  metric: Metric;
 }
+
+const metricLabels: Record<Metric, string> = {
+  maxWeight: "Max Weight",
+  totalVolume: "Total Volume",
+  maxTime: "Max Time",
+  totalTime: "Total Time",
+};
 
 export function ExerciseProgressChart({
   data,
@@ -22,8 +31,8 @@ export function ExerciseProgressChart({
 }: ExerciseProgressChartProps) {
   if (data.length === 0) return null;
 
-  const label = metric === "maxWeight" ? "Max Weight" : "Total Volume";
-  const unit = "lbs";
+  const label = metricLabels[metric];
+  const unit = metric === "maxTime" || metric === "totalTime" ? "sec" : "lbs";
 
   return (
     <ResponsiveContainer width="100%" height={250}>

@@ -4,6 +4,7 @@ create table exercises (
   name text not null,
   is_custom boolean default false,
   user_id uuid references auth.users(id) on delete cascade,
+  mode text not null default 'weight' check (mode in ('weight', 'time')),
   created_at timestamptz default now()
 );
 

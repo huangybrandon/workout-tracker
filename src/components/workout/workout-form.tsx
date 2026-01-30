@@ -161,12 +161,19 @@ export function WorkoutForm({ initialState, workoutId }: WorkoutFormProps) {
       return;
     }
 
-    // Validate all sets have reps and weight
+    // Validate all sets have required fields
     for (const block of state.exercises) {
       for (const set of block.sets) {
-        if (!set.reps || !set.weight) {
-          toast.error(`Fill in all sets for ${block.exercise.name}`);
-          return;
+        if (block.exercise.mode === "time") {
+          if (!set.reps) {
+            toast.error(`Fill in all sets for ${block.exercise.name}`);
+            return;
+          }
+        } else {
+          if (!set.reps || !set.weight) {
+            toast.error(`Fill in all sets for ${block.exercise.name}`);
+            return;
+          }
         }
       }
     }
@@ -203,13 +210,13 @@ export function WorkoutForm({ initialState, workoutId }: WorkoutFormProps) {
         if (deleteError) throw deleteError;
 
         // Insert new sets
-        const sets = state.exercises.flatMap((block, _blockIndex) =>
+        const sets = state.exercises.flatMap((block) =>
           block.sets.map((set, setIndex) => ({
             workout_id: workoutId,
             exercise_id: block.exercise.id,
             set_number: setIndex + 1,
             reps: parseInt(set.reps),
-            weight: parseFloat(set.weight),
+            weight: block.exercise.mode === "time" ? 0 : parseFloat(set.weight),
           }))
         );
 
@@ -238,13 +245,13 @@ export function WorkoutForm({ initialState, workoutId }: WorkoutFormProps) {
         if (workoutError || !workout) throw workoutError;
 
         // Insert sets
-        const sets = state.exercises.flatMap((block, _blockIndex) =>
+        const sets = state.exercises.flatMap((block) =>
           block.sets.map((set, setIndex) => ({
             workout_id: workout.id,
             exercise_id: block.exercise.id,
             set_number: setIndex + 1,
             reps: parseInt(set.reps),
-            weight: parseFloat(set.weight),
+            weight: block.exercise.mode === "time" ? 0 : parseFloat(set.weight),
           }))
         );
 

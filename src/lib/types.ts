@@ -11,6 +11,7 @@ export interface Exercise {
   name: string;
   is_custom: boolean;
   user_id: string | null;
+  mode: "weight" | "time";
   created_at: string;
   tags?: Tag[];
 }
@@ -49,6 +50,7 @@ export interface ExerciseWithTags {
   name: string;
   is_custom: boolean;
   user_id: string | null;
+  mode: "weight" | "time";
   created_at: string;
   exercise_tags: { tags: Tag }[];
 }
@@ -60,6 +62,7 @@ export function normalizeExerciseTags(raw: ExerciseWithTags): Exercise {
     name: raw.name,
     is_custom: raw.is_custom,
     user_id: raw.user_id,
+    mode: raw.mode ?? "weight",
     created_at: raw.created_at,
     tags: raw.exercise_tags?.map((et) => et.tags) ?? [],
   };

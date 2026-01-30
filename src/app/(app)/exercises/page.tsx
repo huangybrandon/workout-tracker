@@ -51,8 +51,10 @@ export default function ExercisesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [editName, setEditName] = useState("");
+  const [editMode, setEditMode] = useState<"weight" | "time">("weight");
   const [editTagIds, setEditTagIds] = useState<Set<string>>(new Set());
   const [newName, setNewName] = useState("");
+  const [newMode, setNewMode] = useState<"weight" | "time">("weight");
   const [newExerciseTagIds, setNewExerciseTagIds] = useState<Set<string>>(new Set());
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState(TAG_COLOR_OPTIONS[0]);
@@ -106,6 +108,7 @@ export default function ExercisesPage() {
         name: newName.trim(),
         is_custom: true,
         user_id: user!.id,
+        mode: newMode,
       })
       .select()
       .single();
@@ -131,6 +134,7 @@ export default function ExercisesPage() {
 
     toast.success("Exercise added");
     setNewName("");
+    setNewMode("weight");
     setNewExerciseTagIds(new Set());
     setDialogOpen(false);
     fetchExercises();
@@ -170,6 +174,7 @@ export default function ExercisesPage() {
   function openEditDialog(exercise: Exercise) {
     setEditingExercise(exercise);
     setEditName(exercise.name);
+    setEditMode(exercise.mode);
     setEditTagIds(new Set(exercise.tags?.map((t) => t.id) ?? []));
     setEditDialogOpen(true);
   }
@@ -180,7 +185,7 @@ export default function ExercisesPage() {
 
     const { error: updateError } = await supabase
       .from("exercises")
-      .update({ name: editName.trim() })
+      .update({ name: editName.trim(), mode: editMode })
       .eq("id", editingExercise.id);
 
     if (updateError) {
@@ -373,6 +378,29 @@ export default function ExercisesPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Mode</Label>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant={newMode === "weight" ? "default" : "outline"}
+                      size="sm"
+                      className="h-8 text-xs px-3"
+                      onClick={() => setNewMode("weight")}
+                    >
+                      Weight
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={newMode === "time" ? "default" : "outline"}
+                      size="sm"
+                      className="h-8 text-xs px-3"
+                      onClick={() => setNewMode("time")}
+                    >
+                      Time
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Label>Tags</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {tags.map((tag) => {
@@ -477,6 +505,29 @@ export default function ExercisesPage() {
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Exercise name"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Mode</Label>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant={editMode === "weight" ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs px-3"
+                  onClick={() => setEditMode("weight")}
+                >
+                  Weight
+                </Button>
+                <Button
+                  type="button"
+                  variant={editMode === "time" ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs px-3"
+                  onClick={() => setEditMode("time")}
+                >
+                  Time
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Tags</Label>
