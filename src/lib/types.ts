@@ -68,6 +68,30 @@ export function normalizeExerciseTags(raw: ExerciseWithTags): Exercise {
   };
 }
 
+// Workout templates
+export interface WorkoutTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkoutTemplateExercise {
+  id: string;
+  template_id: string;
+  exercise_id: string;
+  sort_order: number;
+}
+
+export interface WorkoutTemplateWithExercises extends WorkoutTemplate {
+  workout_template_exercises: (WorkoutTemplateExercise & {
+    exercises: Exercise & {
+      exercise_tags: { tags: Tag }[];
+    };
+  })[];
+}
+
 // Extended types for UI
 export interface WorkoutWithSets extends Workout {
   workout_sets: (WorkoutSet & { exercises: Exercise })[];

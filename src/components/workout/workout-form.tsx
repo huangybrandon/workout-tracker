@@ -22,7 +22,7 @@ import { ExerciseBlock } from "./exercise-block";
 import type { Exercise, ExerciseBlock as ExerciseBlockType, SetInput } from "@/lib/types";
 
 // State types
-interface WorkoutFormState {
+export interface WorkoutFormState {
   name: string;
   date: Date;
   notes: string;
@@ -48,7 +48,7 @@ type WorkoutFormAction =
     }
   | { type: "LOAD"; payload: WorkoutFormState };
 
-function createEmptySet(): SetInput {
+export function createEmptySet(): SetInput {
   return { id: crypto.randomUUID(), reps: "", weight: "" };
 }
 
