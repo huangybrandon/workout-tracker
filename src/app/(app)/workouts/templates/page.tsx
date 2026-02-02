@@ -1,12 +1,8 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { TemplateCard } from "@/components/template/template-card";
 import { Plus, ArrowLeft, LayoutTemplate } from "lucide-react";
-import { toast } from "sonner";
 
 interface TemplateListItem {
   id: string;
@@ -14,47 +10,32 @@ interface TemplateListItem {
   exercises: string[];
 }
 
-export default function TemplatesPage() {
-  const [templates, setTemplates] = useState<TemplateListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+export default async function TemplatesPage() {
+  const supabase = await createClient();
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  async function fetchTemplates() {
-    const { data, error } = await supabase
-      .from("workout_templates")
-      .select(
-        `
-        id,
-        name,
-        workout_template_exercises (
-          sort_order,
-          exercises (
-            name
-          )
-        )
+  const { data } = await supabase
+    .from("workout_templates")
+    .select(
       `
+      id,
+      name,
+      workout_template_exercises (
+        sort_order,
+        exercises (
+          name
+        )
       )
-      .order("updated_at", { ascending: false });
+    `
+    )
+    .order("updated_at", { ascending: false });
 
-    if (error) {
-      toast.error("Failed to load templates");
-    } else {
-      const items: TemplateListItem[] = (data || []).map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        exercises: (t.workout_template_exercises || [])
-          .sort((a: any, b: any) => a.sort_order - b.sort_order)
-          .map((e: any) => e.exercises.name),
-      }));
-      setTemplates(items);
-    }
-
-    setLoading(false);
-  }
+  const templates: TemplateListItem[] = (data || []).map((t: any) => ({
+    id: t.id,
+    name: t.name,
+    exercises: (t.workout_template_exercises || [])
+      .sort((a: any, b: any) => a.sort_order - b.sort_order)
+      .map((e: any) => e.exercises.name),
+  }));
 
   return (
     <div className="space-y-4">
@@ -75,16 +56,7 @@ export default function TemplatesPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-lg bg-muted"
-            />
-          ))}
-        </div>
-      ) : templates.length === 0 ? (
+      {templates.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">
           <LayoutTemplate className="mb-3 h-10 w-10 text-muted-foreground" />
           <p className="mb-4 text-muted-foreground">No templates yet</p>
