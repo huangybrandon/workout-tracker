@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   createEmptySet,
@@ -141,6 +143,16 @@ export function TemplatePicker({
             </CommandGroup>
           </CommandList>
         </Command>
+        <div className="border-t px-4 py-3">
+          <Link
+            href="/workouts/templates/new"
+            onClick={() => onOpenChange(false)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+            Create New Template
+          </Link>
+        </div>
       </DialogContent>
     </Dialog>
   );
