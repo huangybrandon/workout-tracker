@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Play } from "lucide-react";
 import { DeleteTemplateButton } from "@/components/template/delete-template-button";
 import type { Tag } from "@/lib/types";
 
@@ -78,6 +78,13 @@ export default async function TemplateDetailPage({
         </Button>
       </div>
 
+      <Button className="w-full" asChild>
+        <Link href={`/workouts/new?templateId=${id}`}>
+          <Play className="mr-2 h-4 w-4" />
+          Load Template
+        </Link>
+      </Button>
+
       <div className="flex gap-3">
         <Badge variant="secondary">
           {exercises.length} {exercises.length === 1 ? "exercise" : "exercises"}
@@ -116,8 +123,8 @@ export default async function TemplateDetailPage({
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {exercise.mode === "time" ? "Time-based" : "Weight-based"} — 3
-                  sets when loaded
+                  {exercise.mode === "time" ? "Time-based" : "Weight-based"} — 1
+                  set when loaded
                 </p>
               </CardContent>
             </Card>

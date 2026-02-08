@@ -6,6 +6,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 
 interface TemplateCardProps {
   template: {
@@ -21,8 +23,8 @@ export function TemplateCard({ template }: TemplateCardProps) {
   const overflow = exerciseCount - 3;
 
   return (
-    <Link href={`/workouts/templates/${template.id}`}>
-      <Card className="transition-colors hover:bg-accent">
+    <Card className="transition-colors hover:bg-accent">
+      <Link href={`/workouts/templates/${template.id}`}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">{template.name}</CardTitle>
@@ -31,14 +33,22 @@ export function TemplateCard({ template }: TemplateCardProps) {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-2">
           <p className="text-sm text-muted-foreground">
             {exerciseCount === 0
               ? "No exercises"
               : preview + (overflow > 0 ? `, +${overflow} more` : "")}
           </p>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      <CardContent className="pt-0">
+        <Button size="sm" className="w-full" asChild>
+          <Link href={`/workouts/new?templateId=${template.id}`}>
+            <Play className="mr-1 h-3 w-3" />
+            Load Template
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

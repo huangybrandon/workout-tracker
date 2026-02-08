@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { WorkoutForm, type WorkoutFormState } from "@/components/workout/workout-form";
+import type { Tag } from "@/lib/types";
 import { TemplatePicker } from "@/components/template/template-picker";
 import {
   AlertDialog,
@@ -18,6 +21,10 @@ import { ArrowLeft, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 
 export default function NewWorkoutPage() {
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("templateId");
+  const supabase = createClient();
+
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [initialState, setInitialState] = useState<WorkoutFormState | undefined>(
@@ -27,6 +34,62 @@ export default function NewWorkoutPage() {
     null
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (templateId && !initialState) {
+      loadTemplateById(templateId);
+    }
+  }, [templateId]);
+
+  async function loadTemplateById(id: string) {
+    const { data: template, error } = await supabase
+      .from("workout_templates")
+      .select(
+        `
+        id,
+        name,
+        workout_template_exercises (
+          sort_order,
+          exercises (
+            *,
+            exercise_tags (
+              tags (*)
+            )
+          )
+        )
+      `
+      )
+      .eq("id", id)
+      .single();
+
+    if (error || !template) return;
+
+    const exercises = (template.workout_template_exercises || [])
+      .sort((a: any, b: any) => a.sort_order - b.sort_order)
+      .map((te: any) => ({
+        id: te.exercises.id,
+        name: te.exercises.name,
+        is_custom: te.exercises.is_custom,
+        user_id: te.exercises.user_id,
+        mode: te.exercises.mode || "weight",
+        created_at: te.exercises.created_at,
+        tags:
+          te.exercises.exercise_tags?.map((et: { tags: Tag }) => et.tags) ?? [],
+      }));
+
+    const state: WorkoutFormState = {
+      name: "",
+      date: new Date(),
+      notes: "",
+      exercises: exercises.map((exercise: any) => ({
+        exercise,
+        sets: [{ id: crypto.randomUUID(), reps: "1", weight: "0" }],
+      })),
+    };
+
+    setInitialState(state);
+    setFormKey((k) => k + 1);
+  }
 
   function handleLoadTemplate() {
     // If form has exercises, we need to check after template is selected

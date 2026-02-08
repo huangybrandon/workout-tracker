@@ -20,10 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import {
-  createEmptySet,
-  type WorkoutFormState,
-} from "@/components/workout/workout-form";
+import { type WorkoutFormState } from "@/components/workout/workout-form";
 import type { Exercise, Tag } from "@/lib/types";
 
 interface TemplatePickerProps {
@@ -105,7 +102,7 @@ export function TemplatePicker({
       notes: "",
       exercises: template.exercises.map((exercise) => ({
         exercise,
-        sets: [createEmptySet(), createEmptySet(), createEmptySet()],
+        sets: [{ id: crypto.randomUUID(), reps: "1", weight: "0" }],
       })),
     };
 
