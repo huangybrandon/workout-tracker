@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
 import type { Tag } from "@/lib/types";
@@ -110,6 +110,11 @@ export default async function WorkoutDetailPage({
             {format(new Date(workout.date + "T00:00:00"), "EEEE, MMMM d, yyyy")}
           </p>
         </div>
+        <Button variant="outline" size="icon" asChild>
+          <Link href={`/workouts/templates/new?workoutId=${id}`}>
+            <BookmarkPlus className="h-4 w-4" />
+          </Link>
+        </Button>
         <Button variant="outline" size="icon" asChild>
           <Link href={`/workouts/${id}/edit`}>
             <Pencil className="h-4 w-4" />
