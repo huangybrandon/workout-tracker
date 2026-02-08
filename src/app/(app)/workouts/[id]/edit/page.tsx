@@ -86,7 +86,7 @@ export default async function EditWorkoutPage({
 
   const initialState = {
     name: workout.name,
-    date: new Date(workout.date + "T00:00:00"),
+    date: new Date(workout.date + "T12:00:00Z"),
     notes: workout.notes || "",
     exercises,
   };
