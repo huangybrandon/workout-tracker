@@ -3,93 +3,127 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { ExerciseProgressChart } from "@/components/charts/exercise-progress-chart";
+import { WeeklyVolumeChart } from "@/components/charts/weekly-volume-chart";
+import { PrCard } from "@/components/progress/pr-card";
+import { FrequencyCard } from "@/components/progress/frequency-card";
+import { ExerciseGrid } from "@/components/progress/exercise-grid";
 import {
   transformProgressData,
+  computePersonalRecords,
+  computeWeeklyVolume,
+  computeExerciseSummaries,
+  computeWorkoutFrequency,
   type ChartDataPoint,
+  type SetWithExercise,
+  type PersonalRecord,
+  type WeeklyVolume,
+  type ExerciseSummary,
 } from "@/lib/utils/chart-data";
-import type { Exercise, ExerciseWithTags } from "@/lib/types";
-import { normalizeExerciseTags } from "@/lib/types";
 
 type Metric = "maxWeight" | "totalVolume" | "maxTime" | "totalTime";
 
 export default function ProgressPage() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [allSets, setAllSets] = useState<SetWithExercise[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Dashboard data
+  const [prs, setPrs] = useState<PersonalRecord[]>([]);
+  const [weeklyVolume, setWeeklyVolume] = useState<WeeklyVolume[]>([]);
+  const [frequency, setFrequency] = useState<{
+    thisWeek: number;
+    byWeek: { week: string; count: number }[];
+  }>({ thisWeek: 0, byWeek: [] });
+  const [exerciseSummaries, setExerciseSummaries] = useState<
+    ExerciseSummary[]
+  >([]);
+
+  // Detail view state
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
+    null
+  );
+  const [detailData, setDetailData] = useState<ChartDataPoint[]>([]);
   const [metric, setMetric] = useState<Metric>("maxWeight");
-  const [loading, setLoading] = useState(false);
+
   const supabase = createClient();
 
   useEffect(() => {
-    async function fetchExercises() {
-      const { data } = await supabase
-        .from("exercises")
-        .select("*, exercise_tags(tags(*))")
-        .order("name");
-      setExercises(
-        (data as unknown as ExerciseWithTags[])?.map(normalizeExerciseTags) || []
-      );
+    async function fetchAllData() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("workout_sets")
+        .select(
+          `
+          weight,
+          reps,
+          exercise_id,
+          workouts!inner(date),
+          exercises!inner(name, mode)
+        `
+        )
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        toast.error("Failed to load progress data");
+        setLoading(false);
+        return;
+      }
+
+      const sets: SetWithExercise[] = (data || []).map((s: any) => ({
+        date: s.workouts.date,
+        weight: Number(s.weight),
+        reps: s.reps,
+        exercise_id: s.exercise_id,
+        exercise_name: s.exercises.name,
+        exercise_mode: s.exercises.mode ?? "weight",
+      }));
+
+      setAllSets(sets);
+      setPrs(computePersonalRecords(sets));
+      setWeeklyVolume(computeWeeklyVolume(sets));
+      setFrequency(computeWorkoutFrequency(sets));
+      setExerciseSummaries(computeExerciseSummaries(sets));
+      setLoading(false);
     }
-    fetchExercises();
+
+    fetchAllData();
   }, []);
 
-  const selectedExercise = exercises.find((e) => e.id === selectedExerciseId);
-  const exerciseMode = selectedExercise?.mode ?? "weight";
+  function selectExercise(exerciseId: string) {
+    setSelectedExerciseId(exerciseId);
 
-  useEffect(() => {
-    if (selectedExerciseId) {
-      setMetric(exerciseMode === "time" ? "maxTime" : "maxWeight");
-      fetchProgressData(selectedExerciseId);
-    }
-  }, [selectedExerciseId]);
+    const exerciseSets = allSets.filter((s) => s.exercise_id === exerciseId);
+    const mode = exerciseSets[0]?.exercise_mode ?? "weight";
+    setMetric(mode === "time" ? "maxTime" : "maxWeight");
 
-  async function fetchProgressData(exerciseId: string) {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("workout_sets")
-      .select(
-        `
-        weight,
-        reps,
-        workouts!inner (
-          date
-        )
-      `
-      )
-      .eq("exercise_id", exerciseId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      toast.error("Failed to load progress data");
-      setLoading(false);
-      return;
-    }
-
-    const sets = (data || []).map((s) => ({
-      date: (s.workouts as unknown as { date: string }).date,
-      weight: Number(s.weight),
-      reps: s.reps,
-    }));
-
-    setChartData(transformProgressData(sets));
-    setLoading(false);
+    const transformed = transformProgressData(
+      exerciseSets.map((s) => ({
+        date: s.date,
+        weight: s.weight,
+        reps: s.reps,
+      }))
+    );
+    setDetailData(transformed);
   }
+
+  function goBack() {
+    setSelectedExerciseId(null);
+    setDetailData([]);
+  }
+
+  const selectedSummary = exerciseSummaries.find(
+    (e) => e.exerciseId === selectedExerciseId
+  );
+  const exerciseMode = selectedSummary?.exerciseMode ?? "weight";
 
   const metricLabel: Record<Metric, string> = {
     maxWeight: "Max Weight",
@@ -98,28 +132,29 @@ export default function ProgressPage() {
     totalTime: "Total Time",
   };
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Progress</h1>
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Progress</h1>
+        <div className="h-32 animate-pulse rounded-lg bg-muted" />
+        <div className="h-32 animate-pulse rounded-lg bg-muted" />
+        <div className="h-48 animate-pulse rounded-lg bg-muted" />
+      </div>
+    );
+  }
 
-      <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select an exercise" />
-        </SelectTrigger>
-        <SelectContent>
-          {exercises.map((exercise) => (
-            <SelectItem key={exercise.id} value={exercise.id}>
-              {exercise.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+  // Exercise detail view
+  if (selectedExerciseId) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={goBack} className="-ml-2">
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Back
+        </Button>
 
-      {selectedExerciseId && (
-        <Tabs
-          value={metric}
-          onValueChange={(v) => setMetric(v as Metric)}
-        >
+        <h2 className="text-xl font-bold">{selectedSummary?.exerciseName}</h2>
+
+        <Tabs value={metric} onValueChange={(v) => setMetric(v as Metric)}>
           <TabsList className="w-full">
             {exerciseMode === "time" ? (
               <>
@@ -142,36 +177,63 @@ export default function ProgressPage() {
             )}
           </TabsList>
         </Tabs>
-      )}
 
-      {loading ? (
-        <div className="h-64 animate-pulse rounded-lg bg-muted" />
-      ) : selectedExerciseId && chartData.length > 0 ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {selectedExercise?.name} - {metricLabel[metric]}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExerciseProgressChart data={chartData} metric={metric} />
-          </CardContent>
-        </Card>
-      ) : selectedExerciseId && chartData.length === 0 ? (
-        <div className="flex flex-col items-center py-12 text-center">
-          <TrendingUp className="mb-2 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No data for this exercise yet. Log some workouts first!
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center py-12 text-center">
-          <TrendingUp className="mb-2 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            Select an exercise to view your progress
-          </p>
-        </div>
-      )}
+        {detailData.length > 0 ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
+                {selectedSummary?.exerciseName} - {metricLabel[metric]}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExerciseProgressChart data={detailData} metric={metric} />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col items-center py-12 text-center">
+            <TrendingUp className="mb-2 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              No data for this exercise yet.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Dashboard view
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Progress</h1>
+
+      <PrCard records={prs} />
+
+      <FrequencyCard thisWeek={frequency.thisWeek} byWeek={frequency.byWeek} />
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">
+            Total Volume - Last 12 Weeks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {weeklyVolume.some((w) => w.volume > 0) ? (
+            <WeeklyVolumeChart data={weeklyVolume} />
+          ) : (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              No volume data yet
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">Your Exercises</h2>
+        <ExerciseGrid
+          exercises={exerciseSummaries}
+          onSelect={selectExercise}
+        />
+      </div>
     </div>
   );
 }
