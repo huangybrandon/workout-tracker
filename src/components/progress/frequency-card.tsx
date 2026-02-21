@@ -47,11 +47,11 @@ export function FrequencyCard({ thisWeek, byWeek }: FrequencyCardProps) {
             {byWeek.map((w, i) => (
               <div
                 key={w.week}
-                className="flex-1 cursor-pointer rounded-sm transition-opacity"
+                className="flex-1 cursor-pointer rounded-sm transition-opacity bg-primary"
                 style={{
                   height: w.count === 0 ? 2 : (w.count / maxCount) * 100 + "%",
                   minHeight: 2,
-                  backgroundColor: `hsl(var(--primary) / ${hoveredIndex === i ? 1 : 0.8})`,
+                  opacity: hoveredIndex === i ? 1 : 0.8,
                 }}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
