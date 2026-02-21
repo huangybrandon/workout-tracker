@@ -224,11 +224,11 @@ export function computeWorkoutFrequency(
   const thisWeekKey = format(currentWeekStart, "yyyy-MM-dd");
   const thisWeek = byWeek[thisWeekKey]?.size || 0;
 
-  const weeklyData: { week: string; count: number }[] = [];
+  const weeklyData: { week: string; label: string; count: number }[] = [];
   for (let i = 0; i < weeks; i++) {
     const weekStart = subWeeks(currentWeekStart, weeks - 1 - i);
     const key = format(weekStart, "yyyy-MM-dd");
-    weeklyData.push({ week: key, count: byWeek[key]?.size || 0 });
+    weeklyData.push({ week: key, label: format(weekStart, "MMM d"), count: byWeek[key]?.size || 0 });
   }
 
   return { thisWeek, byWeek: weeklyData };

@@ -41,7 +41,7 @@ export default function ProgressPage() {
   const [weeklyVolume, setWeeklyVolume] = useState<WeeklyVolume[]>([]);
   const [frequency, setFrequency] = useState<{
     thisWeek: number;
-    byWeek: { week: string; count: number }[];
+    byWeek: { week: string; label: string; count: number }[];
   }>({ thisWeek: 0, byWeek: [] });
   const [exerciseSummaries, setExerciseSummaries] = useState<
     ExerciseSummary[]
