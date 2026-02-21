@@ -202,7 +202,7 @@ export function computeExerciseSummaries(
 export function computeWorkoutFrequency(
   allSets: SetWithExercise[],
   weeks: number = 12
-): { thisWeek: number; byWeek: { week: string; count: number }[] } {
+): { thisWeek: number; byWeek: { week: string; label: string; count: number }[] } {
   const now = new Date();
   const currentWeekStart = startOfWeek(now, { weekStartsOn: 1 });
   const start = subWeeks(currentWeekStart, weeks - 1);
