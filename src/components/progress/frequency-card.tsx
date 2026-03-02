@@ -58,7 +58,7 @@ export function FrequencyCard({ workoutDates }: FrequencyCardProps) {
     return count;
   }, [currentMonth, workoutDates]);
 
-  const canGoNext = !isFuture(addMonths(startOfMonth(currentMonth), 1));
+  const disableNext = isFuture(startOfMonth(addMonths(currentMonth, 1)));
 
   return (
     <Card>
@@ -82,7 +82,7 @@ export function FrequencyCard({ workoutDates }: FrequencyCardProps) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-              disabled={canGoNext}
+              disabled={disableNext}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
