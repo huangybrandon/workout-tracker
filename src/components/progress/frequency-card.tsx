@@ -1,65 +1,140 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  format,
+  isSameMonth,
+  isToday,
+  isFuture,
+} from "date-fns";
 
 interface FrequencyCardProps {
-  thisWeek: number;
-  byWeek: { week: string; label: string; count: number }[];
+  workoutDates: Set<string>;
 }
 
-export function FrequencyCard({ thisWeek, byWeek }: FrequencyCardProps) {
-  const maxCount = Math.max(...byWeek.map((w) => w.count), 1);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+export function FrequencyCard({ workoutDates }: FrequencyCardProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+    const days: Date[] = [];
+    let day = calStart;
+    while (day <= calEnd) {
+      days.push(day);
+      day = addDays(day, 1);
+    }
+    return days;
+  }, [currentMonth]);
+
+  const workoutCountThisMonth = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    let count = 0;
+    for (const dateStr of workoutDates) {
+      const d = new Date(dateStr + "T00:00:00");
+      if (d >= monthStart && d <= monthEnd) count++;
+    }
+    return count;
+  }, [currentMonth, workoutDates]);
+
+  const disableNext = isFuture(startOfMonth(addMonths(currentMonth, 1)));
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Workout Frequency</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="mb-3 text-2xl font-bold">
-          {thisWeek}
-          <span className="ml-1 text-sm font-normal text-muted-foreground">
-            {thisWeek === 1 ? "workout" : "workouts"} this week
-          </span>
-        </p>
-        <div className="relative">
-          {hoveredIndex !== null && (
-            <div
-              className="pointer-events-none absolute -top-8 z-10 rounded bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md border border-border"
-              style={{
-                left: `calc(${(hoveredIndex / byWeek.length) * 100}% + ${(1 / byWeek.length) * 50}%)`,
-                transform: "translateX(-50%)",
-                whiteSpace: "nowrap",
-              }}
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Workout Frequency</CardTitle>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
             >
-              {byWeek[hoveredIndex].label}: {byWeek[hoveredIndex].count}{" "}
-              {byWeek[hoveredIndex].count === 1 ? "workout" : "workouts"}
-            </div>
-          )}
-          <div className="flex items-end gap-1" style={{ height: 40 }}>
-            {byWeek.map((w, i) => (
-              <div
-                key={w.week}
-                className="flex-1 cursor-pointer rounded-sm transition-opacity bg-primary"
-                style={{
-                  height: w.count === 0 ? 2 : (w.count / maxCount) * 100 + "%",
-                  minHeight: 2,
-                  opacity: hoveredIndex === i ? 1 : 0.8,
-                }}
-                onMouseEnter={() => setHoveredIndex(i)}
-                onMouseLeave={() => setHoveredIndex(null)}
-              />
-            ))}
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="min-w-[100px] text-center text-sm font-medium">
+              {format(currentMonth, "MMM yyyy")}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
+              disabled={disableNext}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">Last 12 weeks</p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-7 gap-y-1 text-center">
+          {DAY_LABELS.map((label) => (
+            <div
+              key={label}
+              className="text-[10px] font-medium text-muted-foreground"
+            >
+              {label}
+            </div>
+          ))}
+          {calendarDays.map((day) => {
+            const dateStr = format(day, "yyyy-MM-dd");
+            const inMonth = isSameMonth(day, currentMonth);
+            const hasWorkout = inMonth && workoutDates.has(dateStr);
+            const today = isToday(day);
+
+            return (
+              <div
+                key={dateStr}
+                className="flex flex-col items-center justify-center py-0.5"
+              >
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                    !inMonth
+                      ? "text-muted-foreground/30"
+                      : today
+                        ? "font-semibold ring-1 ring-primary"
+                        : "text-foreground"
+                  }`}
+                >
+                  {format(day, "d")}
+                </span>
+                <span
+                  className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
+                    hasWorkout ? "bg-primary" : "bg-transparent"
+                  }`}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {workoutCountThisMonth}{" "}
+          {workoutCountThisMonth === 1 ? "workout" : "workouts"} in{" "}
+          {format(currentMonth, "MMMM")}
+        </p>
       </CardContent>
     </Card>
   );
