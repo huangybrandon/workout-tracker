@@ -22,7 +22,6 @@ import {
   computePersonalRecords,
   computeWeeklyVolume,
   computeExerciseSummaries,
-  computeWorkoutFrequency,
   type ChartDataPoint,
   type SetWithExercise,
   type PersonalRecord,
@@ -39,10 +38,7 @@ export default function ProgressPage() {
   // Dashboard data
   const [prs, setPrs] = useState<PersonalRecord[]>([]);
   const [weeklyVolume, setWeeklyVolume] = useState<WeeklyVolume[]>([]);
-  const [frequency, setFrequency] = useState<{
-    thisWeek: number;
-    byWeek: { week: string; label: string; count: number }[];
-  }>({ thisWeek: 0, byWeek: [] });
+  const [workoutDates, setWorkoutDates] = useState<Set<string>>(new Set());
   const [exerciseSummaries, setExerciseSummaries] = useState<
     ExerciseSummary[]
   >([]);
@@ -90,7 +86,7 @@ export default function ProgressPage() {
       setAllSets(sets);
       setPrs(computePersonalRecords(sets));
       setWeeklyVolume(computeWeeklyVolume(sets));
-      setFrequency(computeWorkoutFrequency(sets));
+      setWorkoutDates(new Set(sets.map((s) => s.date)));
       setExerciseSummaries(computeExerciseSummaries(sets));
       setLoading(false);
     }
@@ -208,7 +204,7 @@ export default function ProgressPage() {
 
       <PrCard records={prs} />
 
-      <FrequencyCard thisWeek={frequency.thisWeek} byWeek={frequency.byWeek} />
+      <FrequencyCard workoutDates={workoutDates} />
 
       <Card>
         <CardHeader className="pb-2">
