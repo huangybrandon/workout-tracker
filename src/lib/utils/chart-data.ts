@@ -99,8 +99,11 @@ export function computePersonalRecords(
     const isTime = first.exercise_mode === "time";
     const getValue = (s: SetWithExercise) => (isTime ? s.reps : s.weight);
 
-    const allTimeMax = Math.max(...sets.map(getValue));
-    const recentSets = sets.filter((s) => s.date >= cutoffStr);
+    const validSets = sets.filter((s) => s.reps > 0);
+    if (validSets.length === 0) continue;
+
+    const allTimeMax = Math.max(...validSets.map(getValue));
+    const recentSets = validSets.filter((s) => s.date >= cutoffStr);
     if (recentSets.length === 0) continue;
 
     const recentMax = Math.max(...recentSets.map(getValue));
